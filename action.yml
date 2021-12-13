@@ -1,0 +1,12 @@
+name: 'Setup Spice environment'
+description: 'Setup a Spice environment and add it to the PATH'
+author: 'Marc Auberer'
+inputs: 
+  spice-version:
+    description: 'The Spice version to setup. If you omit this property, the latest version will be downloaded'
+  stable:
+    description: 'Restrict to stable versions'
+    default: 'true'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

@@ -1,7 +1,7 @@
 <p align="center">
-  <img alt="Spice Logo" src="./docs/docs/static/avatar.png" height="220" />
+  <img alt="Spice Logo" src="https://github.com/spicelang/spice/tree/main/docs/docs/static/avatar.png" height="220" />
   <h3 align="center">Spice Programming Language</h3>
-  <p align="center">[https://github.com/features/actions](GitHub Action) to setup the Spice programming language on a runner instance.</p>
+  <p align="center"><a href="https://github.com/features/actions" target="_blank">GitHub Action</a> to setup the Spice programming language on a runner instance.</p>
   <p align="center">
     <a target="_blank" href="https://github.com/spicelang/spice-setup-action/releases/latest"><img src="https://img.shields.io/github/v/release/spicelang/spice-setup-action?include_prereleases"></a>
     <a target="_blank" href="./.github/workflows/ci.yml"><img src="https://github.com/spicelang/spice-setup-action/actions/workflows/ci.yml/badge.svg"></a>
@@ -22,9 +22,9 @@ For detailed configuration information see the [action.yml](action.yml) file. He
 ```yml
 steps:
   - name: Checkout
-	uses: actions/checkout@v2
+    uses: actions/checkout@v2
   - name: Setup Spice
-	uses: actions/setup-spice@v1
+    uses: actions/setup-spice@v1
     with:
       spice-version: 0.5.0 # The Spice version to setup. If you omit this property, the latest version will be downloaded
   - run: spice run example.spice
@@ -41,11 +41,11 @@ jobs:
     name: Setup Spice v${{ matrix.spice }}
     steps:
       - name: Checkout
-	    uses: actions/checkout@v2
+        uses: actions/checkout@v2
       - name: Setup Spice v${{ matrix.spice }}
         uses: actions/setup-spice@v1
         with:
-          spice-version: ${{ matrix.spice }}
+        spice-version: ${{ matrix.spice }}
       - run: spice run example.spice
 ```
 
