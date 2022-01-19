@@ -9,190 +9,237 @@ import os from 'os';
 type InstallationType = 'dist' | 'manifest';
 
 export interface ISpiceVersionFile {
-    filename: string;
-    // darwin, linux, windows
-    os: string;
-    arch: string;
+  filename: string;
+  // darwin, linux, windows
+  os: string;
+  arch: string;
 }
 
 export interface ISpiceVersion {
-    version: string;
-    stable: boolean;
-    files: ISpiceVersionFile[];
+  version: string;
+  stable: boolean;
+  files: ISpiceVersionFile[];
 }
 
 export interface ISpiceVersionInfo {
-    type: InstallationType;
-    downloadUrl: string;
-    resolvedVersion: string;
-    fileName: string;
+  type: InstallationType;
+  downloadUrl: string;
+  resolvedVersion: string;
+  fileName: string;
 }
 
-export async function getSpice(versionSpec: string, stable: boolean, auth: string | undefined) {
-    const osPlat: string = os.platform();
-    const osArch: string = os.arch();
+export async function getSpice(
+  versionSpec: string,
+  stable: boolean,
+  auth: string | undefined
+) {
+  const osPlat: string = os.platform();
+  const osArch: string = os.arch();
 
-    // check cache
-    let toolPath: string = tc.find('spice', versionSpec);
-    // If not found in cache, download
-    if (toolPath) {
-        core.info(`Found in cache @ ${toolPath}`);
-        return toolPath;
+  // check cache
+  let toolPath: string = tc.find('spice', versionSpec);
+  // If not found in cache, download
+  if (toolPath) {
+    core.info(`Found in cache @ ${toolPath}`);
+    return toolPath;
+  }
+  core.info(`Attempting to download ${versionSpec}...`);
+  let downloadPath = '';
+  let info: ISpiceVersionInfo | null = null;
+
+  /*
+   * Try download from internal distribution (popular versions only)
+   */
+  try {
+    info = await getInfoFromManifest(versionSpec, stable, auth);
+    if (info) {
+      downloadPath = await installSpiceVersion(info, auth);
+    } else {
+      core.info(
+        'Not found in manifest. Falling back to download directly from Spice'
+      );
     }
-    core.info(`Attempting to download ${versionSpec}...`);
-    let downloadPath = '';
-    let info: ISpiceVersionInfo | null = null;
+  } catch (err) {
+    if (
+      err instanceof tc.HTTPError &&
+      (err.httpStatusCode === 403 || err.httpStatusCode === 429)
+    ) {
+      core.info(
+        `Received HTTP status code ${err.httpStatusCode}.  This usually indicates the rate limit has been exceeded`
+      );
+    } else {
+      core.info(err.message);
+    }
+    core.debug(err.stack);
+    core.info('Falling back to download directly from Go');
+  }
 
-    /*
-     * Try download from internal distribution (popular versions only)
-     */
+  /*
+   * Download from storage.googleapis.com
+   */
+  if (!downloadPath) {
+    info = await getInfoFromDist(versionSpec, stable, auth);
+    if (!info)
+      throw new Error(
+        `Unable to find Go version '${versionSpec}' for platform ${osPlat} and architecture ${osArch}.`
+      );
+
     try {
-        info = await getInfoFromManifest(versionSpec, stable, auth);
-        if (info) {
-            downloadPath = await installSpiceVersion(info, auth);
-        } else {
-            core.info('Not found in manifest. Falling back to download directly from Spice');
-        }
+      core.info('Install from dist');
+      downloadPath = await installSpiceVersion(info, auth);
     } catch (err) {
-        if (
-            err instanceof tc.HTTPError &&
-            (err.httpStatusCode === 403 || err.httpStatusCode === 429)
-        ) {
-            core.info(`Received HTTP status code ${err.httpStatusCode}.  This usually indicates the rate limit has been exceeded`);
-        } else {
-            core.info(err.message);
-        }
-        core.debug(err.stack);
-        core.info('Falling back to download directly from Go');
+      throw new Error(`Failed to download version ${versionSpec}: ${err}`);
     }
+  }
 
-    /*
-     * Download from storage.googleapis.com
-     */
-    if (!downloadPath) {
-        info = await getInfoFromDist(versionSpec, stable, auth);
-        if (!info) throw new Error(`Unable to find Go version '${versionSpec}' for platform ${osPlat} and architecture ${osArch}.`);
-
-        try {
-            core.info('Install from dist');
-            downloadPath = await installSpiceVersion(info, auth);
-        } catch (err) {
-            throw new Error(`Failed to download version ${versionSpec}: ${err}`);
-        }
-    }
-
-    return downloadPath;
+  return downloadPath;
 }
 
-async function installSpiceVersion(info: ISpiceVersionInfo, auth: string | undefined): Promise<string> {
-    core.info(`Acquiring ${info.resolvedVersion} from ${info.downloadUrl}`);
-    const downloadPath = await tc.downloadTool(info.downloadUrl, undefined, auth);
+async function installSpiceVersion(
+  info: ISpiceVersionInfo,
+  auth: string | undefined
+): Promise<string> {
+  core.info(`Acquiring ${info.resolvedVersion} from ${info.downloadUrl}`);
+  const downloadPath = await tc.downloadTool(info.downloadUrl, undefined, auth);
 
-    core.info('Extracting Spice ...');
-    let extPath = await extractGoArchive(downloadPath);
-    core.info(`Successfully extracted go to ${extPath}`);
-    if (info.type === 'dist') extPath = path.join(extPath, 'spice');
+  core.info('Extracting Spice ...');
+  let extPath = await extractGoArchive(downloadPath);
+  core.info(`Successfully extracted go to ${extPath}`);
+  if (info.type === 'dist') extPath = path.join(extPath, 'spice');
 
-    core.info('Adding to the cache ...');
-    const cachedDir = await tc.cacheDir(extPath, 'spice', makeSemver(info.resolvedVersion));
-    core.info(`Successfully cached Spice to ${cachedDir}`);
-    return cachedDir;
+  core.info('Adding to the cache ...');
+  const cachedDir = await tc.cacheDir(
+    extPath,
+    'spice',
+    makeSemver(info.resolvedVersion)
+  );
+  core.info(`Successfully cached Spice to ${cachedDir}`);
+  return cachedDir;
 }
 
 export async function extractGoArchive(archivePath: string): Promise<string> {
-    const platform = os.platform();
-    let extPath: string;
+  const platform = os.platform();
+  let extPath: string;
 
-    if (platform === 'win32') {
-        extPath = await tc.extractZip(archivePath);
-    } else {
-        extPath = await tc.extractTar(archivePath);
-    }
+  if (platform === 'win32') {
+    extPath = await tc.extractZip(archivePath);
+  } else {
+    extPath = await tc.extractTar(archivePath);
+  }
 
-    return extPath;
+  return extPath;
 }
 
-export async function getInfoFromManifest(versionSpec: string, stable: boolean, auth: string | undefined): Promise<ISpiceVersionInfo | null> {
-    let info: ISpiceVersionInfo | null = null;
-    const releases = await tc.getManifestFromRepo('actions', 'spice-versions', 'main', auth);
-    core.info(`matching ${versionSpec}...`);
-    const rel = await tc.findFromManifest(versionSpec, stable, releases);
+export async function getInfoFromManifest(
+  versionSpec: string,
+  stable: boolean,
+  auth: string | undefined
+): Promise<ISpiceVersionInfo | null> {
+  let info: ISpiceVersionInfo | null = null;
+  const releases = await tc.getManifestFromRepo(
+    'actions',
+    'spice-versions',
+    'main',
+    auth
+  );
+  core.info(`matching ${versionSpec}...`);
+  const rel = await tc.findFromManifest(versionSpec, stable, releases);
 
-    if (rel && rel.files.length > 0) {
-        info = <ISpiceVersionInfo>{};
-        info.type = 'manifest';
-        info.resolvedVersion = rel.version;
-        info.downloadUrl = rel.files[0].download_url;
-        info.fileName = rel.files[0].filename;
-    }
+  if (rel && rel.files.length > 0) {
+    info = <ISpiceVersionInfo>{};
+    info.type = 'manifest';
+    info.resolvedVersion = rel.version;
+    info.downloadUrl = rel.files[0].download_url;
+    info.fileName = rel.files[0].filename;
+  }
 
-    return info;
+  return info;
 }
 
-async function getInfoFromDist(versionSpec: string, stable: boolean, auth: string | undefined): Promise<ISpiceVersionInfo | null> {
-    let version: ISpiceVersion | undefined;
-    version = await findMatch(versionSpec, stable);
-    if (!version) return null;
+async function getInfoFromDist(
+  versionSpec: string,
+  stable: boolean,
+  auth: string | undefined
+): Promise<ISpiceVersionInfo | null> {
+  let version: ISpiceVersion | undefined;
+  version = await findMatch(versionSpec, stable);
+  if (!version) return null;
 
-    let downloadUrl: string = `https://storage.googleapis.com/golang/${version.files[0].filename}`;
+  let downloadUrl: string = `https://storage.googleapis.com/golang/${version.files[0].filename}`;
 
-    return <ISpiceVersionInfo>{
-        type: 'dist',
-        downloadUrl: downloadUrl,
-        resolvedVersion: version.version,
-        fileName: version.files[0].filename
-    };
+  return <ISpiceVersionInfo>{
+    type: 'dist',
+    downloadUrl: downloadUrl,
+    resolvedVersion: version.version,
+    fileName: version.files[0].filename
+  };
 }
 
-export async function findMatch(versionSpec: string, stable: boolean): Promise<ISpiceVersion | undefined> {
-    let archFilter = sys.getArch();
-    let platFilter = sys.getPlatform();
+export async function findMatch(
+  versionSpec: string,
+  stable: boolean
+): Promise<ISpiceVersion | undefined> {
+  let archFilter = sys.getArch();
+  let platFilter = sys.getPlatform();
 
-    let result: ISpiceVersion | undefined;
-    let match: ISpiceVersion | undefined;
+  let result: ISpiceVersion | undefined;
+  let match: ISpiceVersion | undefined;
 
-    const dlUrl: string = 'https://golang.org/dl/?mode=json&include=all';
-    let candidates: ISpiceVersion[] | null = await module.exports.getVersionsDist(dlUrl);
-    if (!candidates) throw new Error(`spicelang download url did not return results`);
+  const dlUrl: string = 'https://golang.org/dl/?mode=json&include=all';
+  let candidates: ISpiceVersion[] | null = await module.exports.getVersionsDist(
+    dlUrl
+  );
+  if (!candidates)
+    throw new Error(`spicelang download url did not return results`);
 
-    let spiceFile: ISpiceVersionFile | undefined;
-    for (let i = 0; i < candidates.length; i++) {
-        let candidate: ISpiceVersion = candidates[i];
-        let version = makeSemver(candidate.version);
+  let spiceFile: ISpiceVersionFile | undefined;
+  for (let i = 0; i < candidates.length; i++) {
+    let candidate: ISpiceVersion = candidates[i];
+    let version = makeSemver(candidate.version);
 
-        // 1.13.0 is advertised as 1.13 preventing being able to match exactly 1.13.0
-        // since a semver of 1.13 would match latest 1.13
-        let parts: string[] = version.split('.');
-        if (parts.length == 2) version = version + '.0';
+    // 1.13.0 is advertised as 1.13 preventing being able to match exactly 1.13.0
+    // since a semver of 1.13 would match latest 1.13
+    let parts: string[] = version.split('.');
+    if (parts.length == 2) version = version + '.0';
 
-        core.debug(`check ${version} satisfies ${versionSpec}`);
-        if (semver.satisfies(version, versionSpec) && (!stable || candidate.stable === stable)) {
-            spiceFile = candidate.files.find(file => {
-                core.debug(`${file.arch}===${archFilter} && ${file.os}===${platFilter}`);
-                return file.arch === archFilter && file.os === platFilter;
-            });
+    core.debug(`check ${version} satisfies ${versionSpec}`);
+    if (
+      semver.satisfies(version, versionSpec) &&
+      (!stable || candidate.stable === stable)
+    ) {
+      spiceFile = candidate.files.find(file => {
+        core.debug(
+          `${file.arch}===${archFilter} && ${file.os}===${platFilter}`
+        );
+        return file.arch === archFilter && file.os === platFilter;
+      });
 
-            if (spiceFile) {
-                core.debug(`matched ${candidate.version}`);
-                match = candidate;
-                break;
-            }
-        }
+      if (spiceFile) {
+        core.debug(`matched ${candidate.version}`);
+        match = candidate;
+        break;
+      }
     }
+  }
 
-    if (match && spiceFile) {
-        // clone since we're mutating the file list to be only the file that matches
-        result = <ISpiceVersion>Object.assign({}, match);
-        result.files = [spiceFile];
-    }
+  if (match && spiceFile) {
+    // clone since we're mutating the file list to be only the file that matches
+    result = <ISpiceVersion>Object.assign({}, match);
+    result.files = [spiceFile];
+  }
 
-    return result;
+  return result;
 }
 
-export async function getVersionsDist(dlUrl: string): Promise<ISpiceVersion[] | null> {
-    // this returns versions descending so latest is first
-    let http: httpm.HttpClient = new httpm.HttpClient('setup-spice', [], { allowRedirects: true, maxRedirects: 3 });
-    return (await http.getJson<ISpiceVersion[]>(dlUrl)).result;
+export async function getVersionsDist(
+  dlUrl: string
+): Promise<ISpiceVersion[] | null> {
+  // this returns versions descending so latest is first
+  let http: httpm.HttpClient = new httpm.HttpClient('setup-spice', [], {
+    allowRedirects: true,
+    maxRedirects: 3
+  });
+  return (await http.getJson<ISpiceVersion[]>(dlUrl)).result;
 }
 
 /*
@@ -203,15 +250,15 @@ export async function getVersionsDist(dlUrl: string): Promise<ISpiceVersion[] | 
  * 1.8.5beta1 => 1.8.5-beta1, 1.8.5rc1 => 1.8.5-rc1
  */
 export function makeSemver(version: string): string {
-    version = version.replace('spice', '');
-    version = version.replace('beta', '-beta').replace('rc', '-rc');
-    let parts = version.split('-');
+  version = version.replace('spice', '');
+  version = version.replace('beta', '-beta').replace('rc', '-rc');
+  let parts = version.split('-');
 
-    let verPart: string = parts[0];
-    let prereleasePart = parts.length > 1 ? `-${parts[1]}` : '';
+  let verPart: string = parts[0];
+  let prereleasePart = parts.length > 1 ? `-${parts[1]}` : '';
 
-    let verParts: string[] = verPart.split('.');
-    if (verParts.length == 2) verPart += '.0';
+  let verParts: string[] = verPart.split('.');
+  if (verParts.length == 2) verPart += '.0';
 
-    return `${verPart}${prereleasePart}`;
+  return `${verPart}${prereleasePart}`;
 }
