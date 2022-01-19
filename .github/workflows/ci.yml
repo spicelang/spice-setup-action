@@ -34,8 +34,8 @@ jobs:
       - name: Lint
         run: npm run format-check
 
-      - name: npm test
-        run: npm test
+      #- name: npm test
+      #  run: npm test
 
       - name: audit packages
         run: npm audit --audit-level=high
