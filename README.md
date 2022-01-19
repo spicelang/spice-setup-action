@@ -52,4 +52,4 @@ jobs:
 ## Contribute to the project
 If you want to contribute to this project, please ensure you comply with the [contribution guidelines](./CONTRIBUTING.md).
 
-© ChilliBits 2021
+© ChilliBits 2021-2022

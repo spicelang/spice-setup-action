@@ -7,6 +7,9 @@ inputs:
   stable:
     description: 'Restrict to stable versions'
     default: 'true'
+  token:
+    description: Used to pull node distributions from spice-versions. Since there's a default, this is typically not supplied by the user.
+    default: ${{ github.token }}
 runs:
   using: 'node16'
   main: 'dist/index.js'
