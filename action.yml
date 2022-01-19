@@ -3,7 +3,7 @@ description: 'Setup a Spice environment and add it to the PATH'
 author: 'Marc Auberer'
 inputs: 
   spice-version:
-    description: 'The Spice version to setup. If you omit this property, the latest version will be downloaded'
+    description: 'The Spice version to setup. If omitted, the latest version will be taken'
   stable:
     description: 'Restrict to stable versions'
     default: 'true'

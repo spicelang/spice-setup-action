@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Spice Logo" src="https://github.com/spicelang/spice/tree/main/docs/docs/static/avatar.png" height="220" />
+  <img alt="Spice Logo" src="https://github.com/spicelang/spice/raw/main/docs/docs/static/avatar.png" height="220" />
   <h3 align="center">Spice Programming Language</h3>
   <p align="center"><a href="https://github.com/features/actions" target="_blank">GitHub Action</a> to setup the Spice programming language on a runner instance.</p>
   <p align="center">
@@ -26,7 +26,7 @@ steps:
   - name: Setup Spice
     uses: actions/setup-spice@v1
     with:
-      spice-version: 0.5.0 # The Spice version to setup. If you omit this property, the latest version will be downloaded
+      spice-version: 0.5.0 # The Spice version to setup. If omitted, the latest version will be taken
   - run: spice run example.spice
 ```
 
