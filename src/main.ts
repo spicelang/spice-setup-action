@@ -52,7 +52,7 @@ export async function run() {
     let goEnv = (cp.execSync(`${spicePath} env`) || '').toString();
     core.info(goEnv);
     core.endGroup();
-  } catch (error) {
+  } catch (error: any) {
     core.setFailed(error.message);
   }
 }

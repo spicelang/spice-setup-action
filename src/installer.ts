@@ -59,7 +59,7 @@ export async function getSpice(
         'Not found in manifest. Falling back to download directly from Spice'
       );
     }
-  } catch (err) {
+  } catch (err: any) {
     if (
       err instanceof tc.HTTPError &&
       (err.httpStatusCode === 403 || err.httpStatusCode === 429)
