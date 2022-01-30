@@ -239,8 +239,6 @@ async function run() {
             const installDir = await installer.getSpice(versionSpec, stable, drafts, auth);
             core.addPath(installDir);
             core.info('Added Spice to the path');
-            core.addPath(path_1.default.join(installDir, 'bin', spicecPathFragment));
-            core.info('Added Spicec to the path');
             await ensureStdLibEnv();
             core.info(`Successfully setup Spice version ${versionSpec}`);
         }

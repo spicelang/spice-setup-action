@@ -51,9 +51,6 @@ export async function run() {
       core.addPath(installDir);
       core.info('Added Spice to the path');
 
-      core.addPath(path.join(installDir, 'bin', spicecPathFragment));
-      core.info('Added Spicec to the path');
-
       await ensureStdLibEnv();
       core.info(`Successfully setup Spice version ${versionSpec}`);
     }

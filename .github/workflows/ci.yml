@@ -38,8 +38,13 @@ jobs:
       - name: npm test
         run: npm test
 
-      - name: Setup Spice
+      - name: Setup Spice - Linux
+        if: matrix.operating-system == 'ubuntu-latest'
         run: npm run start
+
+      - name: Setup Spice - Windows
+        if: matrix.operating-system == 'windows-latest'
+        run: npm run start:win
 
       - name: Compile test file
         working-directory: media
