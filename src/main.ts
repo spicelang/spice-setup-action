@@ -5,6 +5,8 @@ import path from 'path';
 import cp from 'child_process';
 import {URL} from 'url';
 
+const defaultVersion: string = '0.5';
+
 export async function run() {
   try {
     /*
@@ -12,6 +14,7 @@ export async function run() {
      * If not supplied then problem matchers will still be setup. Useful for self-hosted.
      */
     let versionSpec = core.getInput('spice-version');
+    if (!versionSpec) versionSpec = defaultVersion;
 
     /*
      * stable will be true unless false is the exact input
@@ -33,7 +36,12 @@ export async function run() {
       let token = core.getInput('token');
       let auth = !token || isGhes() ? undefined : `token ${token}`;
 
-      const installDir = await installer.getSpice(versionSpec, stable, auth);
+      const installDir = await installer.getSpice(
+        versionSpec,
+        stable,
+        drafts,
+        auth
+      );
 
       core.exportVariable('GOROOT', installDir);
       core.addPath(path.join(installDir, 'bin'));

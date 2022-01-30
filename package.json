@@ -31,8 +31,7 @@
         "@actions/http-client": "^1.0.11",
         "@actions/io": "^1.1.1",
         "@actions/tool-cache": "^1.7.1",
-        "semver": "^7.3.5",
-        "url-exist": "^3.0.0"
+        "semver": "^7.3.5"
     },
     "devDependencies": {
         "@types/jest": "^27.4.0",

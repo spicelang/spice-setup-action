@@ -1,7 +1,6 @@
 import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
 import * as path from 'path';
-import urlExist from 'url-exist';
 import * as semver from 'semver';
 import * as httpm from '@actions/http-client';
 import * as sys from './system';
@@ -36,6 +35,7 @@ export interface ISpiceVersionInfo {
 export async function getSpice(
   versionSpec: string,
   stable: boolean,
+  drafts: boolean,
   auth: string | undefined
 ) {
   const osPlat: string = os.platform();
@@ -52,18 +52,16 @@ export async function getSpice(
   let downloadPath = '';
   let info: ISpiceVersionInfo | null = null;
 
-  // retrieve fully qualified version name
-  const exists = await urlExist('https://google.com');
-
   // download and install Spice
   try {
-    if (info) {
-      downloadPath = await installSpiceVersion(info, auth);
-    } else {
+    info = await getInfoFromDist(versionSpec, stable, drafts);
+    if (!info) {
       throw new Error(
         `Could not find a suitable Spice version to match the given version spec '${versionSpec}'. Aborting.`
       );
     }
+
+    downloadPath = await installSpiceVersion(info, auth);
   } catch (err) {
     throw new Error(`Failed to download Spice version ${versionSpec}: ${err}`);
   }
@@ -154,6 +152,8 @@ export async function findMatch(
     core.info('Not considierung unstable releases');
     candidates = candidates.filter(candidate => !candidate.prerelease);
   }
+
+  core.info(JSON.stringify(candidates));
 
   let spiceFile: ISpiceDownloadAsset | undefined;
   for (let i = 0; i < candidates.length; i++) {
