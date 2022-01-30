@@ -10,7 +10,8 @@
         "format": "prettier --write **/*.ts",
         "format-check": "prettier --check **/*.ts",
         "test": "jest --coverage --passWithNoTests",
-        "pre-checkin": "npm run format && npm run build && npm test --passWithNoTests"
+        "pre-checkin": "npm run format && npm run build && npm test --passWithNoTests",
+        "pre-checkin:win": "npm run format && npm run build:win && npm test --passWithNoTests"
     },
     "repository": {
         "type": "git",
