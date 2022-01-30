@@ -1,10 +1,8 @@
 import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
-import * as path from 'path';
 import * as semver from 'semver';
 import * as httpm from '@actions/http-client';
 import * as sys from './system';
-import cp from 'child_process';
 import os from 'os';
 
 export interface ISpiceVersion {
@@ -80,7 +78,6 @@ async function installSpiceVersion(
   core.info('Extracting Spice ...');
   let extPath = await extractSpiceArchive(downloadPath);
   core.info(`Successfully extracted Spice to ${extPath}`);
-  core.info(cp.execSync(`tree ${extPath}`).toString());
 
   core.info('Adding to the cache ...');
   const cachedDir = await tc.cacheDir(
@@ -132,7 +129,7 @@ export async function findMatch(
   let platFilter = sys.getPlatform();
   let assetFileExt = platFilter === 'windows' ? 'zip' : 'tar.gz';
   let expectedAssetName = `spice_${platFilter}_${archFilter}.${assetFileExt}`;
-  core.info(`Expected asset name: ${expectedAssetName}`);
+  core.debug(`Expected asset name: ${expectedAssetName}`);
 
   let result: ISpiceVersion | undefined;
   let match: ISpiceVersion | undefined;
@@ -160,7 +157,7 @@ export async function findMatch(
     let candidate: ISpiceVersion = candidates[i];
     let version = makeSemver(candidate.tag_name);
 
-    core.info(
+    core.debug(
       `check if version ${version} satisfies the given spec ${versionSpec}`
     );
     if (semver.satisfies(version, versionSpec)) {

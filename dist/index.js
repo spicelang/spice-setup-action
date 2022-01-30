@@ -35,7 +35,6 @@ const core = __importStar(__nccwpck_require__(2186));
 const semver = __importStar(__nccwpck_require__(1383));
 const httpm = __importStar(__nccwpck_require__(9925));
 const sys = __importStar(__nccwpck_require__(5785));
-const child_process_1 = __importDefault(__nccwpck_require__(2081));
 const os_1 = __importDefault(__nccwpck_require__(2037));
 async function getSpice(versionSpec, stable, drafts, auth) {
     const osPlat = os_1.default.platform();
@@ -70,7 +69,6 @@ async function installSpiceVersion(info, auth) {
     core.info('Extracting Spice ...');
     let extPath = await extractSpiceArchive(downloadPath);
     core.info(`Successfully extracted Spice to ${extPath}`);
-    core.info(child_process_1.default.execSync(`tree ${extPath}`).toString());
     core.info('Adding to the cache ...');
     const cachedDir = await tc.cacheDir(extPath, 'spice', makeSemver(info.resolvedVersion));
     core.info(`Successfully cached Spice to ${cachedDir}`);
@@ -104,7 +102,7 @@ async function findMatch(versionSpec, stable, drafts) {
     let platFilter = sys.getPlatform();
     let assetFileExt = platFilter === 'windows' ? 'zip' : 'tar.gz';
     let expectedAssetName = `spice_${platFilter}_${archFilter}.${assetFileExt}`;
-    core.info(`Expected asset name: ${expectedAssetName}`);
+    core.debug(`Expected asset name: ${expectedAssetName}`);
     let result;
     let match;
     const versionDistUrl = 'https://api.github.com/repos/spicelang/spice/releases';
@@ -125,7 +123,7 @@ async function findMatch(versionSpec, stable, drafts) {
     for (let i = 0; i < candidates.length; i++) {
         let candidate = candidates[i];
         let version = makeSemver(candidate.tag_name);
-        core.info(`check if version ${version} satisfies the given spec ${versionSpec}`);
+        core.debug(`check if version ${version} satisfies the given spec ${versionSpec}`);
         if (semver.satisfies(version, versionSpec)) {
             spiceAsset = candidate.assets.find(asset => asset.name === expectedAssetName);
             if (spiceAsset) {
@@ -208,6 +206,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const io = __importStar(__nccwpck_require__(7436));
 const installer = __importStar(__nccwpck_require__(1480));
 const path_1 = __importDefault(__nccwpck_require__(1017));
+const os_1 = __importDefault(__nccwpck_require__(2037));
 const child_process_1 = __importDefault(__nccwpck_require__(2081));
 const url_1 = __nccwpck_require__(7310);
 const defaultVersion = '0.5';
@@ -232,11 +231,16 @@ async function run() {
         let drafts = (core.getInput('drafts') || 'false').toLowerCase() === 'true';
         core.info(`Setup Spice ${stable ? 'stable' : ''} version spec ${versionSpec}`);
         if (versionSpec) {
+            const osPlat = os_1.default.platform();
+            const osArch = os_1.default.arch();
+            const spicecPathFragment = `spicec-${osPlat}-${osArch}`;
             let token = core.getInput('token');
             let auth = !token || isGhes() ? undefined : `token ${token}`;
             const installDir = await installer.getSpice(versionSpec, stable, drafts, auth);
             core.addPath(installDir);
             core.info('Added Spice to the path');
+            core.addPath(path_1.default.join(installDir, 'bin', spicecPathFragment));
+            core.info('Added Spicec to the path');
             await ensureStdLibEnv();
             core.info(`Successfully setup Spice version ${versionSpec}`);
         }

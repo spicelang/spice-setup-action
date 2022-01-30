@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as io from '@actions/io';
 import * as installer from './installer';
 import path from 'path';
+import os from 'os';
 import cp from 'child_process';
 import {URL} from 'url';
 
@@ -33,6 +34,10 @@ export async function run() {
     );
 
     if (versionSpec) {
+      const osPlat: string = os.platform();
+      const osArch: string = os.arch();
+      const spicecPathFragment = `spicec-${osPlat}-${osArch}`;
+
       let token = core.getInput('token');
       let auth = !token || isGhes() ? undefined : `token ${token}`;
 
@@ -45,6 +50,9 @@ export async function run() {
 
       core.addPath(installDir);
       core.info('Added Spice to the path');
+
+      core.addPath(path.join(installDir, 'bin', spicecPathFragment));
+      core.info('Added Spicec to the path');
 
       await ensureStdLibEnv();
       core.info(`Successfully setup Spice version ${versionSpec}`);
