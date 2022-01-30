@@ -32,10 +32,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.makeSemver = exports.getVersionsDist = exports.findMatch = exports.extractSpiceArchive = exports.getSpice = void 0;
 const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
-const path = __importStar(__nccwpck_require__(1017));
 const semver = __importStar(__nccwpck_require__(1383));
 const httpm = __importStar(__nccwpck_require__(9925));
 const sys = __importStar(__nccwpck_require__(5785));
+const child_process_1 = __importDefault(__nccwpck_require__(2081));
 const os_1 = __importDefault(__nccwpck_require__(2037));
 async function getSpice(versionSpec, stable, drafts, auth) {
     const osPlat = os_1.default.platform();
@@ -70,7 +70,7 @@ async function installSpiceVersion(info, auth) {
     core.info('Extracting Spice ...');
     let extPath = await extractSpiceArchive(downloadPath);
     core.info(`Successfully extracted Spice to ${extPath}`);
-    extPath = path.join(extPath, 'spice');
+    core.info(child_process_1.default.execSync(`tree ${extPath}`).toString());
     core.info('Adding to the cache ...');
     const cachedDir = await tc.cacheDir(extPath, 'spice', makeSemver(info.resolvedVersion));
     core.info(`Successfully cached Spice to ${cachedDir}`);
@@ -104,6 +104,7 @@ async function findMatch(versionSpec, stable, drafts) {
     let platFilter = sys.getPlatform();
     let assetFileExt = platFilter === 'windows' ? 'zip' : 'tar.gz';
     let expectedAssetName = `spice_${platFilter}_${archFilter}.${assetFileExt}`;
+    core.info(`Expected asset name: ${expectedAssetName}`);
     let result;
     let match;
     const versionDistUrl = 'https://api.github.com/repos/spicelang/spice/releases';
@@ -120,19 +121,13 @@ async function findMatch(versionSpec, stable, drafts) {
         core.info('Not considierung unstable releases');
         candidates = candidates.filter(candidate => !candidate.prerelease);
     }
-    core.info(JSON.stringify(candidates));
-    let spiceFile;
+    let spiceAsset;
     for (let i = 0; i < candidates.length; i++) {
         let candidate = candidates[i];
         let version = makeSemver(candidate.tag_name);
-        // 1.13.0 is advertised as 1.13 preventing being able to match exactly 1.13.0
-        // since a semver of 1.13 would match latest 1.13
-        let parts = version.split('.');
-        if (parts.length == 2)
-            version = version + '.0';
-        core.info(`check ${version} satisfies ${versionSpec}`);
+        core.info(`check if version ${version} satisfies the given spec ${versionSpec}`);
         if (semver.satisfies(version, versionSpec)) {
-            let spiceAsset = candidate.assets.find(asset => asset.name === expectedAssetName);
+            spiceAsset = candidate.assets.find(asset => asset.name === expectedAssetName);
             if (spiceAsset) {
                 core.debug(`matched ${candidate.tag_name}`);
                 match = candidate;
@@ -140,10 +135,10 @@ async function findMatch(versionSpec, stable, drafts) {
             }
         }
     }
-    if (match && spiceFile) {
+    if (match && spiceAsset) {
         // clone since we're mutating the file list to be only the file that matches
         result = Object.assign({}, match);
-        result.assets = [spiceFile];
+        result.assets = [spiceAsset];
     }
     return result;
 }
@@ -240,8 +235,7 @@ async function run() {
             let token = core.getInput('token');
             let auth = !token || isGhes() ? undefined : `token ${token}`;
             const installDir = await installer.getSpice(versionSpec, stable, drafts, auth);
-            core.exportVariable('GOROOT', installDir);
-            core.addPath(path_1.default.join(installDir, 'bin'));
+            core.addPath(installDir);
             core.info('Added Spice to the path');
             await ensureStdLibEnv();
             core.info(`Successfully setup Spice version ${versionSpec}`);

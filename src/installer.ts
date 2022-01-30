@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as semver from 'semver';
 import * as httpm from '@actions/http-client';
 import * as sys from './system';
+import cp from 'child_process';
 import os from 'os';
 
 export interface ISpiceVersion {
@@ -79,7 +80,7 @@ async function installSpiceVersion(
   core.info('Extracting Spice ...');
   let extPath = await extractSpiceArchive(downloadPath);
   core.info(`Successfully extracted Spice to ${extPath}`);
-  extPath = path.join(extPath, 'spice');
+  core.info(cp.execSync(`tree ${extPath}`).toString());
 
   core.info('Adding to the cache ...');
   const cachedDir = await tc.cacheDir(
@@ -131,6 +132,7 @@ export async function findMatch(
   let platFilter = sys.getPlatform();
   let assetFileExt = platFilter === 'windows' ? 'zip' : 'tar.gz';
   let expectedAssetName = `spice_${platFilter}_${archFilter}.${assetFileExt}`;
+  core.info(`Expected asset name: ${expectedAssetName}`);
 
   let result: ISpiceVersion | undefined;
   let match: ISpiceVersion | undefined;
@@ -153,23 +155,19 @@ export async function findMatch(
     candidates = candidates.filter(candidate => !candidate.prerelease);
   }
 
-  core.info(JSON.stringify(candidates));
-
-  let spiceFile: ISpiceDownloadAsset | undefined;
+  let spiceAsset: ISpiceDownloadAsset | undefined;
   for (let i = 0; i < candidates.length; i++) {
     let candidate: ISpiceVersion = candidates[i];
     let version = makeSemver(candidate.tag_name);
 
-    // 1.13.0 is advertised as 1.13 preventing being able to match exactly 1.13.0
-    // since a semver of 1.13 would match latest 1.13
-    let parts: string[] = version.split('.');
-    if (parts.length == 2) version = version + '.0';
-
-    core.info(`check ${version} satisfies ${versionSpec}`);
+    core.info(
+      `check if version ${version} satisfies the given spec ${versionSpec}`
+    );
     if (semver.satisfies(version, versionSpec)) {
-      let spiceAsset = candidate.assets.find(
+      spiceAsset = candidate.assets.find(
         asset => asset.name === expectedAssetName
       );
+
       if (spiceAsset) {
         core.debug(`matched ${candidate.tag_name}`);
         match = candidate;
@@ -178,10 +176,10 @@ export async function findMatch(
     }
   }
 
-  if (match && spiceFile) {
+  if (match && spiceAsset) {
     // clone since we're mutating the file list to be only the file that matches
     result = <ISpiceVersion>Object.assign({}, match);
-    result.assets = [spiceFile];
+    result.assets = [spiceAsset];
   }
 
   return result;

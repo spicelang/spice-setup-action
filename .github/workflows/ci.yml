@@ -41,6 +41,10 @@ jobs:
       - name: Setup Spice
         run: npm run start
 
+      - name: Compile test file
+        working-directory: media
+        run: spice run test-file.spice
+
       - name: audit packages
         run: npm audit --audit-level=high
         if: matrix.operating-system == 'ubuntu-latest'

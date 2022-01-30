@@ -43,8 +43,7 @@ export async function run() {
         auth
       );
 
-      core.exportVariable('GOROOT', installDir);
-      core.addPath(path.join(installDir, 'bin'));
+      core.addPath(installDir);
       core.info('Added Spice to the path');
 
       await ensureStdLibEnv();
