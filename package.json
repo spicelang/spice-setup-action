@@ -11,7 +11,9 @@
         "format-check": "prettier --check **/*.ts",
         "test": "jest --coverage --passWithNoTests",
         "pre-checkin": "npm run format && npm run build && npm test --passWithNoTests",
-        "pre-checkin:win": "npm run format && npm run build:win && npm test --passWithNoTests"
+        "pre-checkin:win": "npm run format && npm run build:win && npm test --passWithNoTests",
+        "start": "npm run build && node ./dist/index.js",
+        "start:win": "npm run build:win && node ./dist/index.js"
     },
     "repository": {
         "type": "git",
@@ -29,7 +31,8 @@
         "@actions/http-client": "^1.0.11",
         "@actions/io": "^1.1.1",
         "@actions/tool-cache": "^1.7.1",
-        "semver": "^7.3.5"
+        "semver": "^7.3.5",
+        "url-exist": "^3.0.0"
     },
     "devDependencies": {
         "@types/jest": "^27.4.0",

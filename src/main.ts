@@ -3,7 +3,6 @@ import * as io from '@actions/io';
 import * as installer from './installer';
 import path from 'path';
 import cp from 'child_process';
-import fs from 'fs';
 import {URL} from 'url';
 
 export async function run() {
@@ -15,10 +14,16 @@ export async function run() {
     let versionSpec = core.getInput('spice-version');
 
     /*
-     *stable will be true unless false is the exact input
+     * stable will be true unless false is the exact input
      * since getting unstable versions should be explicit
      */
     let stable = (core.getInput('stable') || 'true').toLowerCase() === 'true';
+
+    /*
+     * drafts will be false unless true is the exact input
+     * since getting draft versions should be explicit
+     */
+    let drafts = (core.getInput('drafts') || 'false').toLowerCase() === 'true';
 
     core.info(
       `Setup Spice ${stable ? 'stable' : ''} version spec ${versionSpec}`
@@ -32,60 +37,33 @@ export async function run() {
 
       core.exportVariable('GOROOT', installDir);
       core.addPath(path.join(installDir, 'bin'));
-      core.info('Added go to the path');
+      core.info('Added Spice to the path');
 
-      let added = await addBinToPath();
-      core.debug(`add bin ${added}`);
+      await ensureStdLibEnv();
       core.info(`Successfully setup Spice version ${versionSpec}`);
     }
 
-    // add problem matchers
-    const matchersPath = path.join(__dirname, '..', 'matchers.json');
-    core.info(`##[add-matcher]${matchersPath}`);
-
     // output the version actually being used
     let spicePath = await io.which('spice');
-    let goVersion = (cp.execSync(`${spicePath} version`) || '').toString();
-    core.info(goVersion);
-
-    core.startGroup('go env');
-    let goEnv = (cp.execSync(`${spicePath} env`) || '').toString();
-    core.info(goEnv);
-    core.endGroup();
+    let spiceVersion = (cp.execSync(`${spicePath} --version`) || '').toString();
+    core.info(spiceVersion);
   } catch (error: any) {
     core.setFailed(error.message);
   }
 }
 
-export async function addBinToPath(): Promise<boolean> {
-  let added = false;
-  let s = await io.which('spice');
-  core.debug(`which spice :${s}:`);
-  if (!s) {
+export async function ensureStdLibEnv() {
+  let spiceDir = await io.which('spice');
+  core.debug(`which spice :${spiceDir}:`);
+  if (!spiceDir) {
     core.debug('Spice not in the path');
-    return added;
+    return;
   }
 
-  let buf = cp.execSync('spice env GOPATH');
-  if (buf) {
-    let gp = buf.toString().trim();
-    core.debug(`spice env GOPATH :${gp}:`);
-    if (!fs.existsSync(gp)) {
-      // some of the hosted images have go install but not profile dir
-      core.debug(`creating ${gp}`);
-      io.mkdirP(gp);
-    }
-
-    let bp = path.join(gp, 'bin');
-    if (!fs.existsSync(bp)) {
-      core.debug(`creating ${bp}`);
-      io.mkdirP(bp);
-    }
-
-    core.addPath(bp);
-    added = true;
-  }
-  return added;
+  // Add to env var
+  let stdPath = path.join(spiceDir, 'std');
+  core.exportVariable('SPICE_STD_DIR', stdPath);
+  core.info(`Env var SPICE_STD_DIR is set to: ${stdPath}`);
 }
 
 function isGhes(): boolean {

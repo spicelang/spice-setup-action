@@ -1,12 +1,18 @@
 name: 'Setup Spice environment'
 description: 'Setup a Spice environment and add it to the PATH'
 author: 'Marc Auberer'
+branding:
+  icon: 'play'
+  color: 'orange'
 inputs: 
   spice-version:
     description: 'The Spice version to setup. If omitted, the latest version will be taken'
   stable:
     description: 'Restrict to stable versions'
     default: 'true'
+  drafts:
+    description: 'Allow drafts'
+    default: 'false'
   token:
     description: Used to pull node distributions from spice-versions. Since there's a default, this is typically not supplied by the user.
     default: ${{ github.token }}
