@@ -26,7 +26,7 @@ steps:
   - name: Setup Spice
     uses: actions/setup-spice@v1
     with:
-      spice-version: 0.5.0 # The Spice version to setup. If omitted, the latest version will be taken
+      spice-version: 0.6.0 # The Spice version to setup. If omitted, the latest version will be taken
   - run: spice run example.spice
 ```
 

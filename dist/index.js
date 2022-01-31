@@ -209,7 +209,7 @@ const path_1 = __importDefault(__nccwpck_require__(1017));
 const os_1 = __importDefault(__nccwpck_require__(2037));
 const child_process_1 = __importDefault(__nccwpck_require__(2081));
 const url_1 = __nccwpck_require__(7310);
-const defaultVersion = '0.5';
+const defaultVersion = '0.6';
 async function run() {
     try {
         /*
