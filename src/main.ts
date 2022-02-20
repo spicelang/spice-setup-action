@@ -51,7 +51,10 @@ export async function run() {
       core.addPath(installDir);
       core.info('Added Spice to the path');
 
-      await ensureStdLibEnv();
+      let stdPath = path.join(installDir, 'std');
+      core.exportVariable('SPICE_STD_DIR', stdPath);
+      core.info(`Env var SPICE_STD_DIR is set to: ${stdPath}`);
+
       core.info(`Successfully setup Spice version ${versionSpec}`);
     }
 
@@ -62,20 +65,6 @@ export async function run() {
   } catch (error: any) {
     core.setFailed(error.message);
   }
-}
-
-export async function ensureStdLibEnv() {
-  let spiceDir = await io.which('spice');
-  core.debug(`which spice :${spiceDir}:`);
-  if (!spiceDir) {
-    core.debug('Spice not in the path');
-    return;
-  }
-
-  // Add to env var
-  let stdPath = path.join(spiceDir, 'std');
-  core.exportVariable('SPICE_STD_DIR', stdPath);
-  core.info(`Env var SPICE_STD_DIR is set to: ${stdPath}`);
 }
 
 function isGhes(): boolean {

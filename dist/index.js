@@ -201,7 +201,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ensureStdLibEnv = exports.run = void 0;
+exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const io = __importStar(__nccwpck_require__(7436));
 const installer = __importStar(__nccwpck_require__(1480));
@@ -239,7 +239,9 @@ async function run() {
             const installDir = await installer.getSpice(versionSpec, stable, drafts, auth);
             core.addPath(installDir);
             core.info('Added Spice to the path');
-            await ensureStdLibEnv();
+            let stdPath = path_1.default.join(installDir, 'std');
+            core.exportVariable('SPICE_STD_DIR', stdPath);
+            core.info(`Env var SPICE_STD_DIR is set to: ${stdPath}`);
             core.info(`Successfully setup Spice version ${versionSpec}`);
         }
         // output the version actually being used
@@ -252,19 +254,6 @@ async function run() {
     }
 }
 exports.run = run;
-async function ensureStdLibEnv() {
-    let spiceDir = await io.which('spice');
-    core.debug(`which spice :${spiceDir}:`);
-    if (!spiceDir) {
-        core.debug('Spice not in the path');
-        return;
-    }
-    // Add to env var
-    let stdPath = path_1.default.join(spiceDir, 'std');
-    core.exportVariable('SPICE_STD_DIR', stdPath);
-    core.info(`Env var SPICE_STD_DIR is set to: ${stdPath}`);
-}
-exports.ensureStdLibEnv = ensureStdLibEnv;
 function isGhes() {
     const ghUrl = new url_1.URL(process.env['GITHUB_SERVER_URL'] || 'https://github.com');
     return ghUrl.hostname.toLowerCase() !== 'github.com';
