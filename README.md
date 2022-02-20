@@ -23,8 +23,9 @@ For detailed configuration information see the [action.yml](action.yml) file. He
 steps:
   - name: Checkout
     uses: actions/checkout@v2
+
   - name: Setup Spice
-    uses: actions/setup-spice@v1
+    uses: spicelang/spice-setup-action@v1
     with:
       spice-version: 0.6.0 # The Spice version to setup. If omitted, the latest version will be taken
   - run: spice run example.spice
@@ -42,10 +43,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Setup Spice v${{ matrix.spice }}
-        uses: actions/setup-spice@v1
+        uses: spicelang/spice-setup-action@v1
         with:
-        spice-version: ${{ matrix.spice }}
+          spice-version: ${{ matrix.spice }}
+
       - run: spice run example.spice
 ```
 
