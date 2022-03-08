@@ -22,12 +22,12 @@ For detailed configuration information see the [action.yml](action.yml) file. He
 ```yml
 steps:
   - name: Checkout
-    uses: actions/checkout@v2
+    uses: actions/checkout@v3
 
   - name: Setup Spice
     uses: spicelang/spice-setup-action@v1
     with:
-      spice-version: 0.6.0 # The Spice version to setup. If omitted, the latest version will be taken
+      spice-version: 0.7.0 # The Spice version to setup. If omitted, the latest version will be taken
   - run: spice run example.spice
 ```
 
@@ -38,11 +38,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spice: [ '0.5.0', '0.6.0' ]
+        spice: [ '0.6.0', '0.7.0' ]
     name: Setup Spice v${{ matrix.spice }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Spice v${{ matrix.spice }}
         uses: spicelang/spice-setup-action@v1
