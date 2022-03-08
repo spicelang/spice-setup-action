@@ -1,3 +1,4 @@
+# Release workflow (updates the major version tag)
 name: Release
 
 on:
