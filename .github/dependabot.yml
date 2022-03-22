@@ -12,3 +12,17 @@ updates:
     - spicelang/gh-actions-team
     assignees:
     - spicelang/gh-actions-team
+
+  # Github Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+      time: "04:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 15
+    target-branch: main
+    reviewers:
+      - spicelang/gh-actions-team
+    assignees:
+      - spicelang/gh-actions-team
