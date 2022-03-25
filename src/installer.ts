@@ -4,6 +4,8 @@ import * as semver from 'semver';
 import * as httpm from '@actions/http-client';
 import * as sys from './system';
 import os from 'os';
+import {cp} from 'fs';
+import * as child_process from 'child_process';
 
 export interface ISpiceVersion {
   tag_name: string;
@@ -37,9 +39,6 @@ export async function getSpice(
   drafts: boolean,
   auth: string | undefined
 ) {
-  const osPlat: string = os.platform();
-  const osArch: string = os.arch();
-
   // check cache
   let toolPath: string = tc.find('spice', versionSpec);
   // If not found in cache, download
@@ -212,4 +211,14 @@ export function makeSemver(version: string): string {
   if (verParts.length == 2) verPart += '.0';
 
   return `${verPart}${prereleasePart}`;
+}
+
+export async function installRequirements() {
+  child_process.execSync('sudo add-apt-repository ppa:ubuntu-toolchain-r/test');
+  child_process.execSync('sudo apt update && sudo apt install gcc-11 g++-11');
+  child_process.execSync(
+    'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-11 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-11'
+  );
+  let gccVersion = child_process.execSync('gcc -v');
+  core.info(`GCC version: ${gccVersion}`);
 }

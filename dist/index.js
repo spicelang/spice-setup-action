@@ -33,16 +33,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.makeSemver = exports.getVersionsDist = exports.findMatch = exports.extractSpiceArchive = exports.getSpice = void 0;
+exports.installRequirements = exports.makeSemver = exports.getVersionsDist = exports.findMatch = exports.extractSpiceArchive = exports.getSpice = void 0;
 const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
 const semver = __importStar(__nccwpck_require__(1383));
 const httpm = __importStar(__nccwpck_require__(9925));
 const sys = __importStar(__nccwpck_require__(5785));
 const os_1 = __importDefault(__nccwpck_require__(2037));
+const child_process = __importStar(__nccwpck_require__(2081));
 async function getSpice(versionSpec, stable, drafts, auth) {
-    const osPlat = os_1.default.platform();
-    const osArch = os_1.default.arch();
     // check cache
     let toolPath = tc.find('spice', versionSpec);
     // If not found in cache, download
@@ -173,6 +172,14 @@ function makeSemver(version) {
     return `${verPart}${prereleasePart}`;
 }
 exports.makeSemver = makeSemver;
+async function installRequirements() {
+    child_process.execSync('sudo add-apt-repository ppa:ubuntu-toolchain-r/test');
+    child_process.execSync('sudo apt update && sudo apt install gcc-11 g++-11');
+    child_process.execSync('sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-11 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-11');
+    let gccVersion = child_process.execSync('gcc -v');
+    core.info(`GCC version: ${gccVersion}`);
+}
+exports.installRequirements = installRequirements;
 
 
 /***/ }),
@@ -214,7 +221,6 @@ const core = __importStar(__nccwpck_require__(2186));
 const io = __importStar(__nccwpck_require__(7436));
 const installer = __importStar(__nccwpck_require__(1480));
 const path_1 = __importDefault(__nccwpck_require__(1017));
-const os_1 = __importDefault(__nccwpck_require__(2037));
 const child_process_1 = __importDefault(__nccwpck_require__(2081));
 const url_1 = __nccwpck_require__(7310);
 const defaultVersion = '0.7';
@@ -237,11 +243,10 @@ async function run() {
          * since getting draft versions should be explicit
          */
         let drafts = (core.getInput('drafts') || 'false').toLowerCase() === 'true';
+        core.info('Setup a matching GCC version');
+        await installer.installRequirements();
         core.info(`Setup Spice ${stable ? 'stable' : ''} version spec ${versionSpec}`);
         if (versionSpec) {
-            const osPlat = os_1.default.platform();
-            const osArch = os_1.default.arch();
-            const spicecPathFragment = `spicec-${osPlat}-${osArch}`;
             let token = core.getInput('token');
             let auth = !token || isGhes() ? undefined : `token ${token}`;
             const installDir = await installer.getSpice(versionSpec, stable, drafts, auth);

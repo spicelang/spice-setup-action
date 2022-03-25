@@ -2,7 +2,6 @@ import * as core from '@actions/core';
 import * as io from '@actions/io';
 import * as installer from './installer';
 import path from 'path';
-import os from 'os';
 import cp from 'child_process';
 import {URL} from 'url';
 
@@ -29,15 +28,14 @@ export async function run() {
      */
     let drafts = (core.getInput('drafts') || 'false').toLowerCase() === 'true';
 
+    core.info('Setup a matching GCC version');
+    await installer.installRequirements();
+
     core.info(
       `Setup Spice ${stable ? 'stable' : ''} version spec ${versionSpec}`
     );
 
     if (versionSpec) {
-      const osPlat: string = os.platform();
-      const osArch: string = os.arch();
-      const spicecPathFragment = `spicec-${osPlat}-${osArch}`;
-
       let token = core.getInput('token');
       let auth = !token || isGhes() ? undefined : `token ${token}`;
 
