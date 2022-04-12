@@ -1,6 +1,6 @@
 ---
 name: lru-cache
-version: 6.0.0
+version: 7.8.1
 type: npm
 summary: A cache object that deletes the least-recently-used items.
 homepage: https://github.com/isaacs/node-lru-cache#readme
