@@ -5,7 +5,7 @@ import path from 'path';
 import cp from 'child_process';
 import {URL} from 'url';
 
-const defaultVersion: string = '0.9';
+const defaultVersion: string = '0.10';
 
 export async function run() {
   try {
