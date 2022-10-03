@@ -18,12 +18,17 @@ jobs:
     strategy:
       matrix:
         operating-system:
-          - ubuntu-latest
+          - ubuntu-22.04
           #- windows-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Setup latest GCC and build dependencies
+        run: |
+          sudo apt install gcc-12 g++-12
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 110 --slave /usr/bin/g++ g++ /usr/bin/g++-12 --slave /usr/bin/gcov gcov /usr/bin/gcov-12 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-12 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-12
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -36,17 +41,17 @@ jobs:
 
       - name: Lint
         run: npm run format-check
-        if: matrix.operating-system == 'ubuntu-latest'
+        if: startsWith(matrix.operating-system, 'ubuntu')
 
       - name: npm test
         run: npm test
 
       - name: Setup Spice - Linux
-        if: matrix.operating-system == 'ubuntu-latest'
+        if: startsWith(matrix.operating-system, 'ubuntu')
         run: npm run start
 
       - name: Setup Spice - Windows
-        if: matrix.operating-system == 'windows-latest'
+        if: startsWith(matrix.operating-system, 'ubuntu')
         run: npm run start:win
 
       - name: Compile test file
