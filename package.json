@@ -1,6 +1,6 @@
 {
     "name": "setup-spice",
-    "version": "1.0.6",
+    "version": "1.0.10",
     "private": true,
     "description": "Setup Spice Action",
     "main": "lib/setup-spice.js",
