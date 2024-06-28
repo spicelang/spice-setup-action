@@ -33,7 +33,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.installRequirements = exports.makeSemver = exports.getVersionsDist = exports.findMatch = exports.extractSpiceArchive = exports.getSpice = void 0;
+exports.getSpice = getSpice;
+exports.extractSpiceArchive = extractSpiceArchive;
+exports.findMatch = findMatch;
+exports.getVersionsDist = getVersionsDist;
+exports.makeSemver = makeSemver;
+exports.installRequirements = installRequirements;
 const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
 const semver = __importStar(__nccwpck_require__(1383));
@@ -65,7 +70,6 @@ async function getSpice(versionSpec, stable, drafts, auth) {
     }
     return downloadPath;
 }
-exports.getSpice = getSpice;
 async function installSpiceVersion(info, auth) {
     core.info(`Acquiring ${info.resolvedVersion} from ${info.downloadUrl}`);
     const downloadPath = await tc.downloadTool(info.downloadUrl, undefined, auth);
@@ -88,7 +92,6 @@ async function extractSpiceArchive(archivePath) {
     }
     return extPath;
 }
-exports.extractSpiceArchive = extractSpiceArchive;
 async function getInfoFromDist(versionSpec, stable, drafts) {
     let version;
     version = await findMatch(versionSpec, stable, drafts);
@@ -143,7 +146,6 @@ async function findMatch(versionSpec, stable, drafts) {
     }
     return result;
 }
-exports.findMatch = findMatch;
 async function getVersionsDist(dlUrl) {
     // this returns versions descending so latest is first
     let http = new httpm.HttpClient('setup-spice', [], {
@@ -152,7 +154,6 @@ async function getVersionsDist(dlUrl) {
     });
     return (await http.getJson(dlUrl)).result;
 }
-exports.getVersionsDist = getVersionsDist;
 /*
  * Convert the go version syntax into semver for semver matching
  * 1.13.1 => 1.13.1
@@ -171,7 +172,6 @@ function makeSemver(version) {
         verPart += '.0';
     return `${verPart}${prereleasePart}`;
 }
-exports.makeSemver = makeSemver;
 async function installRequirements() {
     child_process.execSync('sudo add-apt-repository ppa:ubuntu-toolchain-r/test');
     child_process.execSync('sudo apt update && sudo apt install gcc-11 g++-11');
@@ -179,7 +179,6 @@ async function installRequirements() {
     let gccVersion = child_process.execSync('gcc -v');
     core.info(`GCC version: ${gccVersion}`);
 }
-exports.installRequirements = installRequirements;
 
 
 /***/ }),
@@ -216,7 +215,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = void 0;
+exports.run = run;
 const core = __importStar(__nccwpck_require__(2186));
 const io = __importStar(__nccwpck_require__(7436));
 const installer = __importStar(__nccwpck_require__(1480));
@@ -266,7 +265,6 @@ async function run() {
         core.setFailed(error.message);
     }
 }
-exports.run = run;
 function isGhes() {
     const ghUrl = new url_1.URL(process.env['GITHUB_SERVER_URL'] || 'https://github.com');
     return ghUrl.hostname.toLowerCase() !== 'github.com';
@@ -281,7 +279,8 @@ function isGhes() {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getArch = exports.getPlatform = void 0;
+exports.getPlatform = getPlatform;
+exports.getArch = getArch;
 let os = __nccwpck_require__(2037);
 function getPlatform() {
     // darwin and linux match already
@@ -293,7 +292,6 @@ function getPlatform() {
         return 'windows';
     return plat;
 }
-exports.getPlatform = getPlatform;
 function getArch() {
     // 'arm', 'arm64', 'ia32', 'mips', 'mipsel', 'ppc', 'ppc64', 's390', 's390x', 'x32', and 'x64'.
     let arch = os.arch();
@@ -307,7 +305,6 @@ function getArch() {
     }
     return arch;
 }
-exports.getArch = getArch;
 
 
 /***/ }),
