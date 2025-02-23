@@ -242,7 +242,7 @@ const installer = __importStar(__nccwpck_require__(8328));
 const path_1 = __importDefault(__nccwpck_require__(6928));
 const child_process_1 = __importDefault(__nccwpck_require__(5317));
 const url_1 = __nccwpck_require__(7016);
-const defaultVersion = '0.21';
+const defaultVersion = '0.22';
 async function run() {
     try {
         /*
