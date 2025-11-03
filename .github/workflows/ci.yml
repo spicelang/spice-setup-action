@@ -19,7 +19,7 @@ jobs:
       matrix:
         operating-system:
           - ubuntu-24.04
-          #- windows-latest
+          - windows-latest
 
     steps:
       - name: Checkout
@@ -28,7 +28,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 20.x
+          node-version: 22.x
           cache: npm
 
       - name: npm install
@@ -46,7 +46,7 @@ jobs:
         run: npm run start
 
       - name: Setup Spice - Windows
-        if: startsWith(matrix.operating-system, 'ubuntu')
+        if: startsWith(matrix.operating-system, 'windows')
         run: npm run start:win
 
       - name: Compile test file
@@ -55,4 +55,4 @@ jobs:
 
       - name: audit packages
         run: npm audit --audit-level=high
-        if: matrix.operating-system == 'ubuntu-latest'
+        if: startsWith(matrix.operating-system, 'ubuntu')

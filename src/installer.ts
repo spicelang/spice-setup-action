@@ -40,7 +40,7 @@ export async function getSpice(
   auth: string | undefined
 ) {
   // check cache
-  let toolPath: string = tc.find('spice', versionSpec);
+  const toolPath: string = tc.find('spice', versionSpec);
   // If not found in cache, download
   if (toolPath) {
     core.info(`Found in cache @ ${toolPath}`);
@@ -75,7 +75,7 @@ async function installSpiceVersion(
   const downloadPath = await tc.downloadTool(info.downloadUrl, undefined, auth);
 
   core.info('Extracting Spice ...');
-  let extPath = await extractSpiceArchive(downloadPath);
+  const extPath = await extractSpiceArchive(downloadPath);
   core.info(`Successfully extracted Spice to ${extPath}`);
 
   core.info('Adding to the cache ...');
@@ -124,10 +124,10 @@ export async function findMatch(
   stable: boolean,
   drafts: boolean
 ): Promise<ISpiceVersion | undefined> {
-  let archFilter = sys.getArch();
-  let platFilter = sys.getPlatform();
-  let assetFileExt = platFilter === 'windows' ? 'zip' : 'tar.gz';
-  let expectedAssetName = `spice_${platFilter}_${archFilter}.${assetFileExt}`;
+  const archFilter = sys.getArch();
+  const platFilter = sys.getPlatform();
+  const assetFileExt = platFilter === 'windows' ? 'zip' : 'tar.gz';
+  const expectedAssetName = `spice_${platFilter}_${archFilter}.${assetFileExt}`;
   core.debug(`Expected asset name: ${expectedAssetName}`);
 
   let result: ISpiceVersion | undefined;
@@ -214,11 +214,16 @@ export function makeSemver(version: string): string {
 }
 
 export async function installRequirements() {
-  child_process.execSync('sudo add-apt-repository ppa:ubuntu-toolchain-r/test');
-  child_process.execSync('sudo apt update && sudo apt install gcc-11 g++-11');
-  child_process.execSync(
-    'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-11 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-11'
-  );
+  const platFilter = sys.getPlatform();
+  if (platFilter !== 'windows') {
+    child_process.execSync(
+      'sudo add-apt-repository ppa:ubuntu-toolchain-r/test'
+    );
+    child_process.execSync('sudo apt update && sudo apt install gcc-14 g++-14');
+    child_process.execSync(
+      'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 110 --slave /usr/bin/g++ g++ /usr/bin/g++-14 --slave /usr/bin/gcov gcov /usr/bin/gcov-14 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-14 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-14'
+    );
+  }
   let gccVersion = child_process.execSync('gcc -v');
   core.info(`GCC version: ${gccVersion}`);
 }
