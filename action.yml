@@ -17,5 +17,5 @@ inputs:
     description: Used to pull node distributions from spice-versions. Since there's a default, this is typically not supplied by the user.
     default: ${{ github.token }}
 runs:
-  using: 'node22'
+  using: 'node24'
   main: 'dist/index.js'
