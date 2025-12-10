@@ -4,7 +4,6 @@ import * as semver from 'semver';
 import * as httpm from '@actions/http-client';
 import * as sys from './system';
 import os from 'os';
-import {cp} from 'fs';
 import * as child_process from 'child_process';
 
 export interface ISpiceVersion {
@@ -193,7 +192,7 @@ export async function getVersionsDist(
 }
 
 /*
- * Convert the go version syntax into semver for semver matching
+ * Convert the Spice version syntax into semver for semver matching
  * 1.13.1 => 1.13.1
  * 1.13 => 1.13.0
  * 1.10beta1 => 1.10.0-beta1, 1.10rc1 => 1.10.0-rc1

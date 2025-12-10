@@ -165,7 +165,7 @@ async function getVersionsDist(dlUrl) {
     return (await http.getJson(dlUrl)).result;
 }
 /*
- * Convert the go version syntax into semver for semver matching
+ * Convert the Spice version syntax into semver for semver matching
  * 1.13.1 => 1.13.1
  * 1.13 => 1.13.0
  * 1.10beta1 => 1.10.0-beta1, 1.10rc1 => 1.10.0-rc1
