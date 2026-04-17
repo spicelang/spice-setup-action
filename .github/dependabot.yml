@@ -11,7 +11,7 @@ updates:
     reviewers:
     - spicelang/gh-actions-team
     assignees:
-    - spicelang/gh-actions-team
+    - marcauberer
 
   # Github Actions
   - package-ecosystem: github-actions
@@ -25,4 +25,4 @@ updates:
     reviewers:
       - spicelang/gh-actions-team
     assignees:
-      - spicelang/gh-actions-team
+      - marcauberer
