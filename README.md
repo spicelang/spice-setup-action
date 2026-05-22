@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spice: [ '0.25.0', '0.24.4' ]
+        spice: [ '0.25.1', '0.24.4' ]
     name: Setup Spice v${{ matrix.spice }}
     steps:
       - name: Checkout
