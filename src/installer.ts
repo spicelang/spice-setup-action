@@ -2,7 +2,7 @@ import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
 import * as semver from 'semver';
 import * as httpm from '@actions/http-client';
-import * as sys from './system';
+import * as sys from './system.js';
 import os from 'os';
 import * as child_process from 'child_process';
 
