@@ -218,9 +218,9 @@ export async function installRequirements() {
     child_process.execSync(
       'sudo add-apt-repository ppa:ubuntu-toolchain-r/test'
     );
-    child_process.execSync('sudo apt update && sudo apt install gcc-14 g++-14');
+    child_process.execSync('sudo apt update && sudo apt install gcc-16 g++-16');
     child_process.execSync(
-      'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 110 --slave /usr/bin/g++ g++ /usr/bin/g++-14 --slave /usr/bin/gcov gcov /usr/bin/gcov-14 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-14 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-14'
+      'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 110 --slave /usr/bin/g++ g++ /usr/bin/g++-16 --slave /usr/bin/gcov gcov /usr/bin/gcov-16 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-16 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-16'
     );
   }
   let gccVersion = child_process.execSync('gcc -v');
