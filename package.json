@@ -38,7 +38,7 @@
         "@types/jest": "^30.0.0",
         "@types/node": "^26.0.0",
         "@types/semver": "^7.7.1",
-        "esbuild": "^0.28.0",
+        "esbuild": "^0.28.1",
         "jest": "^30.4.2",
         "jest-circus": "^30.4.2",
         "nock": "^14.0.15",
