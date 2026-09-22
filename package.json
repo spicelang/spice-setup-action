@@ -39,7 +39,7 @@
         "@types/node": "^26.6.1",
         "@types/semver": "^7.8.0",
         "esbuild": "^0.28.2",
-        "jest": "^30.5.1",
+        "jest": "^30.5.2",
         "jest-circus": "^30.4.2",
         "nock": "^14.0.17",
         "prettier": "^3.9.8",
