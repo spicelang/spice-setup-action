@@ -41,7 +41,7 @@
         "esbuild": "^0.28.2",
         "jest": "^30.5.2",
         "jest-circus": "^30.4.2",
-        "nock": "^14.0.17",
+        "nock": "^15.0.1",
         "prettier": "^3.9.9",
         "ts-jest": "^29.4.14",
         "typescript": "^6.0.3"
