@@ -36,13 +36,13 @@
     },
     "devDependencies": {
         "@types/jest": "^30.0.0",
-        "@types/node": "^26.6.4",
+        "@types/node": "^26.6.5",
         "@types/semver": "^7.8.0",
         "esbuild": "^0.28.2",
         "jest": "^30.5.2",
-        "jest-circus": "^30.4.2",
-        "nock": "^14.0.17",
-        "prettier": "^3.9.9",
+        "jest-circus": "^30.5.2",
+        "nock": "^15.0.1",
+        "prettier": "^3.9.10",
         "ts-jest": "^29.4.14",
         "typescript": "^6.0.3"
     }
