@@ -23633,7 +23633,7 @@ async function installRequirements() {
 import path6 from "path";
 import cp2 from "child_process";
 import { URL as URL2 } from "url";
-var defaultVersion = "0.27";
+var defaultVersion = "0.29";
 async function run() {
   try {
     let versionSpec = getInput("spice-version");
