@@ -23810,10 +23810,10 @@ async function getSpice(versionSpec, stable, drafts, auth) {
   let downloadPath = "";
   let info2 = null;
   try {
-    info2 = await getInfoFromDist(versionSpec, stable, drafts);
+    info2 = await getInfoFromDist(versionSpec, stable, drafts, auth);
     if (!info2) {
       throw new Error(
-        `Could not find a suitable Spice version to match the given version spec '${versionSpec}'. Aborting.`
+        `Could not find a suitable Spice version to match the given version spec '${versionSpec}' with a release asset named '${getExpectedAssetName()}'. Aborting.`
       );
     }
     downloadPath = await installSpiceVersion(info2, auth);
@@ -23847,9 +23847,9 @@ async function extractSpiceArchive(archivePath) {
   }
   return extPath;
 }
-async function getInfoFromDist(versionSpec, stable, drafts) {
+async function getInfoFromDist(versionSpec, stable, drafts, auth) {
   let version;
-  version = await findMatch(versionSpec, stable, drafts);
+  version = await findMatch(versionSpec, stable, drafts, auth);
   if (!version) return null;
   return {
     downloadUrl: version.assets[0].browser_download_url,
@@ -23857,16 +23857,19 @@ async function getInfoFromDist(versionSpec, stable, drafts) {
     fileName: version.assets[0].name
   };
 }
-async function findMatch(versionSpec, stable, drafts) {
+function getExpectedAssetName() {
   const archFilter = getArch();
   const platFilter = getPlatform();
   const assetFileExt = platFilter === "windows" ? "zip" : "tar.gz";
-  const expectedAssetName = `spice_${platFilter}_${archFilter}.${assetFileExt}`;
+  return `spice_${platFilter}_${archFilter}.${assetFileExt}`;
+}
+async function findMatch(versionSpec, stable, drafts, auth) {
+  const expectedAssetName = getExpectedAssetName();
   debug(`Expected asset name: ${expectedAssetName}`);
   let result;
   let match;
   const versionDistUrl = "https://api.github.com/repos/spicelang/spice/releases";
-  let candidates = await getVersionsDist(versionDistUrl);
+  let candidates = await getVersionsDist(versionDistUrl, auth);
   if (!candidates)
     throw new Error(`spicelang download url did not return results`);
   if (!drafts) {
@@ -23901,12 +23904,13 @@ async function findMatch(versionSpec, stable, drafts) {
   }
   return result;
 }
-async function getVersionsDist(dlUrl) {
+async function getVersionsDist(dlUrl, auth) {
   let http2 = new HttpClient("setup-spice", [], {
     allowRedirects: true,
     maxRedirects: 3
   });
-  return (await http2.getJson(dlUrl)).result;
+  const headers = auth ? { authorization: auth } : {};
+  return (await http2.getJson(dlUrl, headers)).result;
 }
 function makeSemver(version) {
   version = version.replace("spice", "");
@@ -23920,17 +23924,36 @@ function makeSemver(version) {
 }
 async function installRequirements() {
   const platFilter = getPlatform();
-  if (platFilter !== "windows") {
-    child_process.execSync(
-      "sudo add-apt-repository ppa:ubuntu-toolchain-r/test"
-    );
-    child_process.execSync("sudo apt update && sudo apt install gcc-16 g++-16");
-    child_process.execSync(
-      "sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 110 --slave /usr/bin/g++ g++ /usr/bin/g++-16 --slave /usr/bin/gcov gcov /usr/bin/gcov-16 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-16 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-16"
-    );
+  switch (platFilter) {
+    case "linux":
+      installLinuxRequirements();
+      break;
+    case "darwin":
+      installMacOSRequirements();
+      break;
   }
-  let gccVersion = child_process.execSync("gcc -v");
+}
+function installLinuxRequirements() {
+  info("Setup a matching GCC version");
+  child_process.execSync("sudo add-apt-repository ppa:ubuntu-toolchain-r/test");
+  child_process.execSync("sudo apt update && sudo apt install gcc-16 g++-16");
+  child_process.execSync(
+    "sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 110 --slave /usr/bin/g++ g++ /usr/bin/g++-16 --slave /usr/bin/gcov gcov /usr/bin/gcov-16 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-16 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-16"
+  );
+  let gccVersion = child_process.execSync("gcc -v 2>&1");
   info(`GCC version: ${gccVersion}`);
+}
+function installMacOSRequirements() {
+  info("Installing Spice runtime dependencies with Homebrew");
+  child_process.execSync(
+    "brew list zstd >/dev/null 2>&1 || brew install zstd",
+    {
+      stdio: "inherit",
+      env: { ...process.env, HOMEBREW_NO_AUTO_UPDATE: "1" }
+    }
+  );
+  let clangVersion = child_process.execSync("clang --version 2>&1");
+  info(`Clang version: ${clangVersion}`);
 }
 
 // src/main.ts
@@ -23944,7 +23967,7 @@ async function run() {
     if (!versionSpec) versionSpec = defaultVersion;
     let stable = (getInput("stable") || "true").toLowerCase() === "true";
     let drafts = (getInput("drafts") || "false").toLowerCase() === "true";
-    info("Setup a matching GCC version");
+    info("Setup the toolchain requirements");
     await installRequirements();
     info(
       `Setup Spice ${stable ? "stable" : ""} version spec ${versionSpec}`

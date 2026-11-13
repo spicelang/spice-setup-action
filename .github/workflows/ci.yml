@@ -16,10 +16,13 @@ jobs:
     name: CI
     runs-on: ${{ matrix.operating-system }}
     strategy:
+      fail-fast: false
       matrix:
         operating-system:
           - ubuntu-24.04
           - windows-latest
+          # Spice only ships arm64 builds for macOS, so an Apple Silicon runner is required
+          - macos-26
 
     steps:
       - name: Checkout
@@ -41,13 +44,17 @@ jobs:
       - name: npm test
         run: npm test
 
-      - name: Setup Spice - Linux
-        if: startsWith(matrix.operating-system, 'ubuntu')
+      - name: Setup Spice - Linux / macOS
+        if: ${{ !startsWith(matrix.operating-system, 'windows') }}
         run: npm run start
+        env:
+          INPUT_TOKEN: ${{ github.token }}
 
       - name: Setup Spice - Windows
         if: startsWith(matrix.operating-system, 'windows')
         run: npm run start:win
+        env:
+          INPUT_TOKEN: ${{ github.token }}
 
       - name: Compile test file
         working-directory: media

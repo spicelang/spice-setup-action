@@ -51,10 +51,10 @@ export async function getSpice(
 
   // download and install Spice
   try {
-    info = await getInfoFromDist(versionSpec, stable, drafts);
+    info = await getInfoFromDist(versionSpec, stable, drafts, auth);
     if (!info) {
       throw new Error(
-        `Could not find a suitable Spice version to match the given version spec '${versionSpec}'. Aborting.`
+        `Could not find a suitable Spice version to match the given version spec '${versionSpec}' with a release asset named '${getExpectedAssetName()}'. Aborting.`
       );
     }
 
@@ -105,10 +105,11 @@ export async function extractSpiceArchive(
 async function getInfoFromDist(
   versionSpec: string,
   stable: boolean,
-  drafts: boolean
+  drafts: boolean,
+  auth?: string
 ): Promise<ISpiceVersionInfo | null> {
   let version: ISpiceVersion | undefined;
-  version = await findMatch(versionSpec, stable, drafts);
+  version = await findMatch(versionSpec, stable, drafts, auth);
   if (!version) return null;
 
   return <ISpiceVersionInfo>{
@@ -118,15 +119,20 @@ async function getInfoFromDist(
   };
 }
 
-export async function findMatch(
-  versionSpec: string,
-  stable: boolean,
-  drafts: boolean
-): Promise<ISpiceVersion | undefined> {
+export function getExpectedAssetName(): string {
   const archFilter = sys.getArch();
   const platFilter = sys.getPlatform();
   const assetFileExt = platFilter === 'windows' ? 'zip' : 'tar.gz';
-  const expectedAssetName = `spice_${platFilter}_${archFilter}.${assetFileExt}`;
+  return `spice_${platFilter}_${archFilter}.${assetFileExt}`;
+}
+
+export async function findMatch(
+  versionSpec: string,
+  stable: boolean,
+  drafts: boolean,
+  auth?: string
+): Promise<ISpiceVersion | undefined> {
+  const expectedAssetName = getExpectedAssetName();
   core.debug(`Expected asset name: ${expectedAssetName}`);
 
   let result: ISpiceVersion | undefined;
@@ -134,7 +140,7 @@ export async function findMatch(
 
   const versionDistUrl: string =
     'https://api.github.com/repos/spicelang/spice/releases';
-  let candidates = await getVersionsDist(versionDistUrl);
+  let candidates = await getVersionsDist(versionDistUrl, auth);
   if (!candidates)
     throw new Error(`spicelang download url did not return results`);
 
@@ -181,14 +187,18 @@ export async function findMatch(
 }
 
 export async function getVersionsDist(
-  dlUrl: string
+  dlUrl: string,
+  auth?: string
 ): Promise<ISpiceVersion[] | null> {
   // this returns versions descending so latest is first
   let http: httpm.HttpClient = new httpm.HttpClient('setup-spice', [], {
     allowRedirects: true,
     maxRedirects: 3
   });
-  return (await http.getJson<ISpiceVersion[]>(dlUrl)).result;
+  // Authenticate if possible: unauthenticated GitHub API requests are limited
+  // to 60 per hour per IP, which shared runners exhaust regularly
+  const headers: {[header: string]: string} = auth ? {authorization: auth} : {};
+  return (await http.getJson<ISpiceVersion[]>(dlUrl, headers)).result;
 }
 
 /*
@@ -214,15 +224,39 @@ export function makeSemver(version: string): string {
 
 export async function installRequirements() {
   const platFilter = sys.getPlatform();
-  if (platFilter !== 'windows') {
-    child_process.execSync(
-      'sudo add-apt-repository ppa:ubuntu-toolchain-r/test'
-    );
-    child_process.execSync('sudo apt update && sudo apt install gcc-16 g++-16');
-    child_process.execSync(
-      'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 110 --slave /usr/bin/g++ g++ /usr/bin/g++-16 --slave /usr/bin/gcov gcov /usr/bin/gcov-16 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-16 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-16'
-    );
+  switch (platFilter) {
+    case 'linux':
+      installLinuxRequirements();
+      break;
+    case 'darwin':
+      installMacOSRequirements();
+      break;
   }
-  let gccVersion = child_process.execSync('gcc -v');
+}
+
+function installLinuxRequirements() {
+  core.info('Setup a matching GCC version');
+  child_process.execSync('sudo add-apt-repository ppa:ubuntu-toolchain-r/test');
+  child_process.execSync('sudo apt update && sudo apt install gcc-16 g++-16');
+  child_process.execSync(
+    'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 110 --slave /usr/bin/g++ g++ /usr/bin/g++-16 --slave /usr/bin/gcov gcov /usr/bin/gcov-16 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-16 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-16'
+  );
+  let gccVersion = child_process.execSync('gcc -v 2>&1');
   core.info(`GCC version: ${gccVersion}`);
+}
+
+function installMacOSRequirements() {
+  // The released Spice compiler loads Homebrew's libzstd at runtime. Linking
+  // is done with Apple clang from the Xcode Command Line Tools, which are
+  // preinstalled on the GitHub-hosted macOS runners.
+  core.info('Installing Spice runtime dependencies with Homebrew');
+  child_process.execSync(
+    'brew list zstd >/dev/null 2>&1 || brew install zstd',
+    {
+      stdio: 'inherit',
+      env: {...process.env, HOMEBREW_NO_AUTO_UPDATE: '1'}
+    }
+  );
+  let clangVersion = child_process.execSync('clang --version 2>&1');
+  core.info(`Clang version: ${clangVersion}`);
 }

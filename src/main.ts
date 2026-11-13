@@ -28,7 +28,7 @@ export async function run() {
      */
     let drafts = (core.getInput('drafts') || 'false').toLowerCase() === 'true';
 
-    core.info('Setup a matching GCC version');
+    core.info('Setup the toolchain requirements');
     await installer.installRequirements();
 
     core.info(
