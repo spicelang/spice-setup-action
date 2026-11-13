@@ -23810,7 +23810,7 @@ async function getSpice(versionSpec, stable, drafts, auth) {
   let downloadPath = "";
   let info2 = null;
   try {
-    info2 = await getInfoFromDist(versionSpec, stable, drafts);
+    info2 = await getInfoFromDist(versionSpec, stable, drafts, auth);
     if (!info2) {
       throw new Error(
         `Could not find a suitable Spice version to match the given version spec '${versionSpec}' with a release asset named '${getExpectedAssetName()}'. Aborting.`
@@ -23847,9 +23847,9 @@ async function extractSpiceArchive(archivePath) {
   }
   return extPath;
 }
-async function getInfoFromDist(versionSpec, stable, drafts) {
+async function getInfoFromDist(versionSpec, stable, drafts, auth) {
   let version;
-  version = await findMatch(versionSpec, stable, drafts);
+  version = await findMatch(versionSpec, stable, drafts, auth);
   if (!version) return null;
   return {
     downloadUrl: version.assets[0].browser_download_url,
@@ -23863,13 +23863,13 @@ function getExpectedAssetName() {
   const assetFileExt = platFilter === "windows" ? "zip" : "tar.gz";
   return `spice_${platFilter}_${archFilter}.${assetFileExt}`;
 }
-async function findMatch(versionSpec, stable, drafts) {
+async function findMatch(versionSpec, stable, drafts, auth) {
   const expectedAssetName = getExpectedAssetName();
   debug(`Expected asset name: ${expectedAssetName}`);
   let result;
   let match;
   const versionDistUrl = "https://api.github.com/repos/spicelang/spice/releases";
-  let candidates = await getVersionsDist(versionDistUrl);
+  let candidates = await getVersionsDist(versionDistUrl, auth);
   if (!candidates)
     throw new Error(`spicelang download url did not return results`);
   if (!drafts) {
@@ -23904,12 +23904,13 @@ async function findMatch(versionSpec, stable, drafts) {
   }
   return result;
 }
-async function getVersionsDist(dlUrl) {
+async function getVersionsDist(dlUrl, auth) {
   let http2 = new HttpClient("setup-spice", [], {
     allowRedirects: true,
     maxRedirects: 3
   });
-  return (await http2.getJson(dlUrl)).result;
+  const headers = auth ? { authorization: auth } : {};
+  return (await http2.getJson(dlUrl, headers)).result;
 }
 function makeSemver(version) {
   version = version.replace("spice", "");

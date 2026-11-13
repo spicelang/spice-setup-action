@@ -47,10 +47,14 @@ jobs:
       - name: Setup Spice - Linux / macOS
         if: ${{ !startsWith(matrix.operating-system, 'windows') }}
         run: npm run start
+        env:
+          INPUT_TOKEN: ${{ github.token }}
 
       - name: Setup Spice - Windows
         if: startsWith(matrix.operating-system, 'windows')
         run: npm run start:win
+        env:
+          INPUT_TOKEN: ${{ github.token }}
 
       - name: Compile test file
         working-directory: media

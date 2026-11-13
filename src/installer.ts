@@ -51,7 +51,7 @@ export async function getSpice(
 
   // download and install Spice
   try {
-    info = await getInfoFromDist(versionSpec, stable, drafts);
+    info = await getInfoFromDist(versionSpec, stable, drafts, auth);
     if (!info) {
       throw new Error(
         `Could not find a suitable Spice version to match the given version spec '${versionSpec}' with a release asset named '${getExpectedAssetName()}'. Aborting.`
@@ -105,10 +105,11 @@ export async function extractSpiceArchive(
 async function getInfoFromDist(
   versionSpec: string,
   stable: boolean,
-  drafts: boolean
+  drafts: boolean,
+  auth?: string
 ): Promise<ISpiceVersionInfo | null> {
   let version: ISpiceVersion | undefined;
-  version = await findMatch(versionSpec, stable, drafts);
+  version = await findMatch(versionSpec, stable, drafts, auth);
   if (!version) return null;
 
   return <ISpiceVersionInfo>{
@@ -128,7 +129,8 @@ export function getExpectedAssetName(): string {
 export async function findMatch(
   versionSpec: string,
   stable: boolean,
-  drafts: boolean
+  drafts: boolean,
+  auth?: string
 ): Promise<ISpiceVersion | undefined> {
   const expectedAssetName = getExpectedAssetName();
   core.debug(`Expected asset name: ${expectedAssetName}`);
@@ -138,7 +140,7 @@ export async function findMatch(
 
   const versionDistUrl: string =
     'https://api.github.com/repos/spicelang/spice/releases';
-  let candidates = await getVersionsDist(versionDistUrl);
+  let candidates = await getVersionsDist(versionDistUrl, auth);
   if (!candidates)
     throw new Error(`spicelang download url did not return results`);
 
@@ -185,14 +187,18 @@ export async function findMatch(
 }
 
 export async function getVersionsDist(
-  dlUrl: string
+  dlUrl: string,
+  auth?: string
 ): Promise<ISpiceVersion[] | null> {
   // this returns versions descending so latest is first
   let http: httpm.HttpClient = new httpm.HttpClient('setup-spice', [], {
     allowRedirects: true,
     maxRedirects: 3
   });
-  return (await http.getJson<ISpiceVersion[]>(dlUrl)).result;
+  // Authenticate if possible: unauthenticated GitHub API requests are limited
+  // to 60 per hour per IP, which shared runners exhaust regularly
+  const headers: {[header: string]: string} = auth ? {authorization: auth} : {};
+  return (await http.getJson<ISpiceVersion[]>(dlUrl, headers)).result;
 }
 
 /*
