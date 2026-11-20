@@ -18,9 +18,9 @@ This is the source code for the Spice Setup Action. This GH Action can be used t
 ## Supported runners
 | OS      | Architecture | Notes                                                                                     |
 |---------|--------------|-------------------------------------------------------------------------------------------|
-| Linux   | x64, arm64   | Installs GCC 16 via apt                                                                   |
+| Linux   | x64, arm64   |                                                                                           |
 | Windows | x64          |                                                                                           |
-| macOS   | arm64        | Apple Silicon runners only (e.g. `macos-26`). Installs `zstd` via Homebrew if missing     |
+| macOS   | arm64        | Apple Silicon runners only (e.g. `macos-26`)                                              |
 
 ## Usage
 For detailed configuration information see the [action.yml](action.yml) file. Here are a few examples how to use it:
