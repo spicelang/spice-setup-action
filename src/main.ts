@@ -28,9 +28,6 @@ export async function run() {
      */
     let drafts = (core.getInput('drafts') || 'false').toLowerCase() === 'true';
 
-    core.info('Setup the toolchain requirements');
-    await installer.installRequirements();
-
     core.info(
       `Setup Spice ${stable ? 'stable' : ''} version spec ${versionSpec}`
     );

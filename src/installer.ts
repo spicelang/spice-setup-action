@@ -4,7 +4,6 @@ import * as semver from 'semver';
 import * as httpm from '@actions/http-client';
 import * as sys from './system.js';
 import os from 'os';
-import * as child_process from 'child_process';
 
 export interface ISpiceVersion {
   tag_name: string;
@@ -220,43 +219,4 @@ export function makeSemver(version: string): string {
   if (verParts.length == 2) verPart += '.0';
 
   return `${verPart}${prereleasePart}`;
-}
-
-export async function installRequirements() {
-  const platFilter = sys.getPlatform();
-  switch (platFilter) {
-    case 'linux':
-      installLinuxRequirements();
-      break;
-    case 'darwin':
-      installMacOSRequirements();
-      break;
-  }
-}
-
-function installLinuxRequirements() {
-  core.info('Setup a matching GCC version');
-  child_process.execSync('sudo add-apt-repository ppa:ubuntu-toolchain-r/test');
-  child_process.execSync('sudo apt update && sudo apt install gcc-16 g++-16');
-  child_process.execSync(
-    'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 110 --slave /usr/bin/g++ g++ /usr/bin/g++-16 --slave /usr/bin/gcov gcov /usr/bin/gcov-16 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-16 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-16'
-  );
-  let gccVersion = child_process.execSync('gcc -v 2>&1');
-  core.info(`GCC version: ${gccVersion}`);
-}
-
-function installMacOSRequirements() {
-  // The released Spice compiler loads Homebrew's libzstd at runtime. Linking
-  // is done with Apple clang from the Xcode Command Line Tools, which are
-  // preinstalled on the GitHub-hosted macOS runners.
-  core.info('Installing Spice runtime dependencies with Homebrew');
-  child_process.execSync(
-    'brew list zstd >/dev/null 2>&1 || brew install zstd',
-    {
-      stdio: 'inherit',
-      env: {...process.env, HOMEBREW_NO_AUTO_UPDATE: '1'}
-    }
-  );
-  let clangVersion = child_process.execSync('clang --version 2>&1');
-  core.info(`Clang version: ${clangVersion}`);
 }
