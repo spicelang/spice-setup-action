@@ -34,7 +34,7 @@ steps:
   - name: Setup Spice
     uses: spicelang/spice-setup-action@v1
     with:
-      spice-version: 0.29.0 # The Spice version to setup. If omitted, the latest version will be taken
+      spice-version: 0.30.0 # The Spice version to setup. If omitted, the latest version will be taken
       
   - run: spice run example.spice
 ```
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spice: [ '0.28.2', '0.29.0' ]
+        spice: [ '0.30.0', '0.29.5' ]
     name: Setup Spice v${{ matrix.spice }}
     steps:
       - name: Checkout

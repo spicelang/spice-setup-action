@@ -20,8 +20,7 @@ jobs:
       matrix:
         operating-system:
           - ubuntu-24.04
-          - windows-latest
-          # Spice only ships arm64 builds for macOS, so an Apple Silicon runner is required
+          - windows-2025
           - macos-26
 
     steps:
@@ -31,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.x
+          node-version: 26.x
           cache: npm
 
       - name: npm install
